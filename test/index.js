@@ -48,4 +48,5 @@ test('error handling', function (t) {
     p2.push('more data')
     p1.end(new Error('test error'))
     p2.push('data 3')
+    p2.end(new Error('error 2'))
 })
