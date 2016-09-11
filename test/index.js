@@ -50,3 +50,37 @@ test('error handling', function (t) {
     p2.push('data 3')
     p2.end(new Error('error 2'))
 })
+
+test('slow source', function (t) {
+    t.plan(2)
+
+    function source (count, timeout) {
+      var i = 0
+      return function (abort, cb) {
+          if (i === count) return cb(true)
+          setTimeout(function () {
+              cb(null, i++)
+          }, timeout)
+      }
+    }
+
+    var expected = [
+        [0,0],
+        [0,1],
+        [0,2],
+        [1,2],
+        [1,3]
+    ]
+
+    S(
+        combine(
+            source(2, 50),
+            source(4, 20)
+        ),
+        S.collect(function (err, data) {
+            t.error(err, 'should not have error')
+            t.deepEqual(data, expected, 'should emit the right data')
+            t.end()
+        })
+    )
+})

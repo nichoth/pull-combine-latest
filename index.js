@@ -11,50 +11,56 @@ module.exports = function combineLatest (streams) {
     }
     var haveData = false
     var err = false
+    var allEnded = false
 
     var abort = null
     var emit
     function source (_abort, emitNext) {
-        abort = _abort
+        if (_abort) {
+            abort = _abort
+            // if there is already a cb waiting, abort it.
+            if (emit) emitNext(abort)
+        }
         emit = emitNext
+        drain()
     }
 
-    streams.forEach(function sink (s, i) {
-        process.nextTick(function () {
-            s(abort, function onData (end, data) {
-                if (err) return
-                if (end === true) {
-                    ended[i] = true
-                    var allEnded = ended.every(function (e) {
-                        return e
-                    })
-                    if (allEnded) {
-                        emit(true)
-                    }
-                    return
-                }
+    function drain () {
+      if (abort) return emit(abort)
 
-                err = end || err
-                if (err) {
-                    return emit(err)
-                }
+      streams.forEach(function sink (s, i) {
+          s(abort, function onData (end, data) {
+              if (allEnded) return
+              if (err) return
+              if (end === true) {
+                  ended[i] = true
+                  allEnded = ended.every(function (e) {
+                      return e === true
+                  })
+                  if (allEnded) {
+                      emit(true)
+                  }
+                  return
+              }
 
-                buffer[i] = data
-                if (!haveData) {
-                    haveData = buffer.every(function (b) {
-                        return b
-                    })
-                }
-                if (haveData) {
-                    emit(null, [].concat(buffer))
-                }
+              err = end || err
+              if (err) {
+                  return emit(err)
+              }
 
-                process.nextTick(function () {
-                    s(abort, onData)
-                })
-            })
-        })
-    })
+              buffer[i] = data
+              if (!haveData) {
+                  haveData = buffer.every(function (b) {
+                      return b != null
+                  })
+              }
+
+              if (haveData) {
+                  emit(null, [].concat(buffer))
+              }
+          })
+      })
+    }
 
     return source
 }
