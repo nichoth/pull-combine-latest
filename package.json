@@ -1,0 +1,33 @@
+{
+  "name": "pull-combine-latest",
+  "version": "1.0.0",
+  "description": "Combine latest for pull streams",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "tape test/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nichoth/pull-combine-latest.git"
+  },
+  "keywords": [
+    "pull-stream",
+    "pull",
+    "stream",
+    "combine",
+    "latest"
+  ],
+  "author": "Nick Thomas",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nichoth/pull-combine-latest/issues"
+  },
+  "homepage": "https://github.com/nichoth/pull-combine-latest#readme",
+  "devDependencies": {
+    "pull-stream": "^3.4.5",
+    "tape": "^4.6.0"
+  }
+}
