@@ -1,4 +1,4 @@
-function combineLatest (streams) {
+module.exports = function combineLatest (streams) {
     if (!Array.isArray(streams)) {
         streams = [].slice.call(arguments)
     }
@@ -60,4 +60,3 @@ function combineLatest (streams) {
     return source
 }
 
-module.exports = combineLatest
