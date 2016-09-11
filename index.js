@@ -11,6 +11,7 @@ function combineLatest (streams) {
     }
     var haveData = false
     var err = false
+    var allDone = false
 
     var abort = null
     var emit
@@ -21,7 +22,9 @@ function combineLatest (streams) {
 
     streams.forEach(function sink (s, i) {
         process.nextTick(function () {
+            if (allDone) return
             s(abort, function onData (end, data) {
+                if (err) return
                 if (end === true) {
                     ended[i] = true
                     var allEnded = ended.every(function (e) {
@@ -32,8 +35,10 @@ function combineLatest (streams) {
                     }
                     return
                 }
+
                 err = end || err
                 if (err) {
+                    allDone = true
                     return emit(err)
                 }
 
