@@ -7,6 +7,8 @@
     "example": "example"
   },
   "scripts": {
+    "preversion": "npm test",
+    "postversion": "git push && git push --tags && npm publish",
     "test": "tape test/index.js"
   },
   "repository": {
