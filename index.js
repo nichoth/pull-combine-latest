@@ -21,7 +21,6 @@ module.exports = function combineLatest (streams) {
 
     streams.forEach(function sink (s, i) {
         process.nextTick(function () {
-            if (err) return
             s(abort, function onData (end, data) {
                 if (err) return
                 if (end === true) {
