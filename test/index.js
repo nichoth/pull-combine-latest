@@ -84,3 +84,32 @@ test('slow source', function (t) {
         })
     )
 })
+
+test('slow consumer', function (t) {
+    t.plan(3)
+
+    function slowSink (source) {
+        setTimeout(function () {
+            source(null, function (end, data) {
+                t.deepEqual(data, [1,'a'])
+
+                setTimeout(function () {
+                    source(null, function (end, data) {
+                        t.deepEqual(data, [2,'a'])
+
+                        setTimeout(function () {
+                            source(null, function (end, data) {
+                                t.deepEqual(data, [2, 'b'])
+                            })
+                        }, 10)
+                    })
+                }, 10)
+            })
+        }, 10)
+    }
+
+    S(
+        combine(S.values([1,2]), S.values(['a','b'])),
+        slowSink
+    )
+})
