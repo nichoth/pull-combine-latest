@@ -18,7 +18,6 @@ S(
     S.log()
 )
 
-
 S(
     // or pass streams as arguments
     combineLatest(S.values([1,2,3]), S.values(['a','b','c'])),
@@ -34,5 +33,19 @@ output:
     [3,'b']
     [3,'c']
 
+*/
+
+
+// synchronous data is emitted first, async data is emitted as it comes
+S(
+    combineLatest(S.values([1,2,3]), asyncValues(['a','b','c'])),
+    S.log()
+)
+/*
+    [1,'a']
+    [2,'a']
+    [3,'a']
+    [3,'b']
+    [3,'c']
 */
 ```
