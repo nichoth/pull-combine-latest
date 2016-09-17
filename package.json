@@ -1,6 +1,6 @@
 {
   "name": "pull-combine-latest",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Combine latest for pull streams",
   "main": "index.js",
   "directories": {
