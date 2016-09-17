@@ -36,7 +36,8 @@ output:
 */
 
 
-// synchronous data is emitted first, async data is emitted as it comes
+// new data is emitted as soon as it is received, so sync data will always
+// be emitted before async data
 S(
     combineLatest(S.values([1,2,3]), asyncValues(['a','b','c'])),
     S.log()
