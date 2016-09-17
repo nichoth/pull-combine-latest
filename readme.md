@@ -1,4 +1,4 @@
-# pull combine latest
+# pull combine latest [![Build Status](https://travis-ci.org/nichoth/pull-combine-latest.svg?branch=master)](https://travis-ci.org/nichoth/pull-combine-latest)
 
 Combine the latest values from many streams. The algorithm waits until every stream has emitted a value, then emits a new array whenever one of the streams has more data.
 
