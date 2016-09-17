@@ -3,17 +3,6 @@ var S = require('pull-stream')
 var Pushable = require('pull-pushable')
 var combine = require('../')
 
-function asyncSource (count, timeout) {
-    var i = 0
-    timeout = timeout || 0
-    return function (abort, cb) {
-        if (i === count) return cb(true)
-        setTimeout(function () {
-            cb(null, i++)
-        }, timeout)
-    }
-}
-
 test('read from sync source', function (t) {
     t.plan(2)
 
@@ -34,6 +23,17 @@ test('read from sync source', function (t) {
     )
 })
 
+function asyncSource (count, timeout) {
+    var i = 0
+    timeout = timeout || 0
+    return function (abort, cb) {
+        if (i === count) return cb(true)
+        setTimeout(function () {
+            cb(null, i++)
+        }, timeout)
+    }
+}
+
 test('read from async source', function (t) {
     t.plan(2)
 
@@ -47,8 +47,8 @@ test('read from async source', function (t) {
 
     S(
         combine(
-            source(2, 50),
-            source(4, 20)
+            asyncSource(2, 50),
+            asyncSource(4, 20)
         ),
         S.collect(function (err, data) {
             t.error(err, 'should not have error')
@@ -60,7 +60,6 @@ test('read from async source', function (t) {
 
 test('read from both sync and async sources', function (t) {
     t.plan(2)
-
     var expected = [
         [1,0],
         [2,0],
@@ -78,58 +77,78 @@ test('read from both sync and async sources', function (t) {
     )
 })
 
+function SlowSink (t) {
+    t.plan(5)
+    var expected = [
+        [0,0],
+        [1,0],
+        [1,1],
+        [2,1],
+        [2,2]
+    ]
+    var i = 0
+    return function sink (source) {
+        process.nextTick(() => {
+            source(null, function onNext (end, data) {
+                if (end) return
+                t.deepEqual(data, expected[i],
+                    'should emit the right data')
+                i++
+                process.nextTick(() => source(null, onNext))
+            })
+        })
+    }
+}
 
-// test('async consumer', function (t) {
-//     t.plan(3)
+test('async consumer', function (t) {
+    S(
+        combine(S.values([0,1,2]), S.values([0,1,2])),
+        SlowSink(t)
+    )
+})
 
-//     function SlowSink () {
-//         var i = 0
-//         return function sink (source) {
-//             setTimeout(() => {
-//                 source(null, function onNext (end, data) {
-//                     t.deepEqual(data, [i, i],
-//                         'should emit the right data'
-//                     )
-//                     if (!end) {
-//                         setTimeout(() => {
-//                             source(null, onNext)
-//                         }, 10)
-//                     }
-//                 })
-//             }, 10)
-//         }
-//     }
-
+// test('async consumer with async source', function (t) {
 //     S(
-//         combine(S.values([0,1,2]), S.values([0,1,2])),
-//         SlowSink()
+//         combine(asyncSource(3), asyncSource(3)),
+//         SlowSink(t)
 //     )
 // })
 
-// test('error handling', function (t) {
-//     t.plan(2)
+test('error handling', function (t) {
+    t.plan(2)
+    var p1 = Pushable()
+    var p2 = Pushable()
 
-//     var p1 = Pushable()
-//     var p2 = Pushable()
+    function sink (source) {
+        source(null, function onEvent (end, data) {
+            if (end === true) return t.fail('should not end')
+            if (end) return t.equal(end.message, 'test error',
+                'should emit error once')
+            t.deepEqual(data, ['data', 'more data'], 'should emit data once')
+            source(null, onEvent)
+        })
+    }
 
-//     function sink (source) {
-//         source(null, function onEvent (end, data) {
-//             if (end === true) return t.fail('should not end')
-//             if (end) return t.equal(end.message, 'test error',
-//                 'should emit error once')
-//             t.deepEqual(data, ['data', 'more data'], 'should emit data once')
-//             source(null, onEvent)
-//         })
-//     }
+    S(
+        combine(p1, p2),
+        sink
+    )
 
-//     S(
-//         combine(p1, p2),
-//         sink
-//     )
+    p1.push('data')
+    p2.push('more data')
+    p1.end(new Error('test error'))
+    p2.push('data 3')
+    p2.end(new Error('error 2'))
+})
 
-//     p1.push('data')
-//     p2.push('more data')
-//     p1.end(new Error('test error'))
-//     p2.push('data 3')
-//     p2.end(new Error('error 2'))
-// })
+test('error before start', function (t) {
+    t.plan(1)
+    S(
+        combine(S.values([1,2,3]), S.error(new Error('test'))),
+        S.drain(function onData (d) {
+            t.fail('should not emit data')
+        }, function onEnd (err) {
+            t.equal('test', err.message, 'should emit the error')
+        })
+    )
+})

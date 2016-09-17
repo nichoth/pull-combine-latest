@@ -9,7 +9,7 @@
   "scripts": {
     "preversion": "npm test",
     "postversion": "git push && git push --tags && npm publish",
-    "test": "tape test/index.js"
+    "test": "tape test/index.js | tap-spec"
   },
   "repository": {
     "type": "git",
@@ -31,6 +31,7 @@
   "devDependencies": {
     "pull-pushable": "^2.0.1",
     "pull-stream": "^3.4.5",
+    "tap-spec": "^4.1.1",
     "tape": "^4.6.0"
   }
 }
