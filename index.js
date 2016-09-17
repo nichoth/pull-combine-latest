@@ -27,21 +27,14 @@ module.exports = function combineLatest (streams) {
 
     function source (_abort, emitNext) {
         if (queue.length) return emitNext.apply(null, queue.shift())
-        if (_abort) {
-            abort = _abort
-            // if there is already a cb waiting, abort it.
-            // if (_emit) emitNext(abort)
-        }
+        _abort = abort || _abort
         _emit = emitNext
         drain()
     }
 
     function drain () {
-        // if (abort) return emit(abort)
-
         streams.forEach(function sink (s, i) {
-            if (ended[i]) return
-            if (resolving[i]) return
+            if (ended[i] || resolving[i]) return
             resolving[i] = true
             s(abort, function onData (end, data) {
                 resolving[i] = false
@@ -51,16 +44,12 @@ module.exports = function combineLatest (streams) {
                     allEnded = ended.every(function (e) {
                         return e === true
                     })
-                    if (allEnded) {
-                        emit(true)
-                    }
+                    if (allEnded) emit(true)
                     return
                 }
 
                 err = end || err
-                if (err) {
-                    return emit(err)
-                }
+                if (err) return emit(err)
 
                 buffer[i] = data
                 if (!haveData) {
@@ -69,9 +58,7 @@ module.exports = function combineLatest (streams) {
                     })
                 }
 
-                if (haveData) {
-                    emit(null, [].concat(buffer))
-                }
+                if (haveData) emit(null, [].concat(buffer))
             })
         })
     }
