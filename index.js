@@ -27,7 +27,7 @@ module.exports = function combineLatest (streams) {
 
     function source (_abort, emitNext) {
         if (queue.length) return emitNext.apply(null, queue.shift())
-        _abort = abort || _abort
+        abort = _abort || abort
         _emit = emitNext
         drain()
     }
