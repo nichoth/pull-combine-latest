@@ -27,7 +27,7 @@ function asyncSource (count, timeout) {
     var i = 0
     timeout = timeout || 0
     return function (abort, cb) {
-        if (i === count) return cb(true)
+        if (i === count) return process.nextTick(() => cb(true))
         setTimeout(function () {
             cb(null, i++)
         }, timeout)
@@ -88,15 +88,15 @@ function SlowSink (t) {
     ]
     var i = 0
     return function sink (source) {
-        process.nextTick(() => {
+        setTimeout(() => {
             source(null, function onNext (end, data) {
                 if (end) return
                 t.deepEqual(data, expected[i],
                     'should emit the right data')
                 i++
-                process.nextTick(() => source(null, onNext))
+                setTimeout(() => source(null, onNext), 10)
             })
-        })
+        }, 10)
     }
 }
 
@@ -107,12 +107,12 @@ test('async consumer', function (t) {
     )
 })
 
-// test('async consumer with async source', function (t) {
-//     S(
-//         combine(asyncSource(3), asyncSource(3)),
-//         SlowSink(t)
-//     )
-// })
+test('async consumer with async source', function (t) {
+    S(
+        combine(asyncSource(3), asyncSource(3)),
+        SlowSink(t)
+    )
+})
 
 test('error handling', function (t) {
     t.plan(2)
