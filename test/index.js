@@ -209,6 +209,30 @@ test('error aborts all sources', function (t) {
     )
 })
 
+test('errors abort streams that are resolving', function (t) {
+    t.plan(2)
+
+    function Source () {
+        return function (abort, next) {
+            if (abort) {
+                return t.pass('should abort async stream')
+            }
+            setTimeout(() => {
+                next(null, 'data')
+            }, 50)
+        }
+    }
+
+    S(
+        combine( Source(), S.error(new Error('test')) ),
+        S.drain(function onData (d) {
+            t.fail('should not emit data')
+        }, function onEnd (err) {
+            t.equal(err.message, 'test', 'should pass the error')
+        })
+    )
+})
+
 test('error before start', function (t) {
     t.plan(1)
     S(
