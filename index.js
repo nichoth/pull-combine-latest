@@ -34,7 +34,7 @@ module.exports = function combineLatest (streams) {
 
     function drain () {
         streams.forEach(function sink (s, i) {
-            if (ended[i] || resolving[i]) return
+            if (ended[i] || resolving[i] || err) return
             resolving[i] = true
             s(abort, function onData (end, data) {
                 resolving[i] = false
