@@ -12,7 +12,7 @@ module.exports = function combineLatest (streams) {
         resolving.push(false)
     }
     var haveData = false
-    var err = false
+    var err = null
     var allEnded = false
     var queue = []
 
@@ -34,9 +34,9 @@ module.exports = function combineLatest (streams) {
 
     function drain () {
         streams.forEach(function sink (s, i) {
-            if (ended[i] || resolving[i] || err) return
+            if (ended[i] || resolving[i]) return
             resolving[i] = true
-            s(abort, function onData (end, data) {
+            s(abort || err, function onData (end, data) {
                 resolving[i] = false
                 if (err) return
                 if (end === true) {
@@ -49,7 +49,12 @@ module.exports = function combineLatest (streams) {
                 }
 
                 err = end || err
-                if (err) return emit(err)
+                if (err) {
+                    ended[i] = true
+                    // need to abort all other sources
+                    drain()
+                    return emit(err)
+                }
 
                 buffer[i] = data
                 if (!haveData) {

@@ -114,7 +114,7 @@ test('async consumer with async source', function (t) {
     )
 })
 
-test('error handling', function (t) {
+test('sync error handling', function (t) {
     t.plan(2)
     var p1 = Pushable()
     var p2 = Pushable()
@@ -139,6 +139,74 @@ test('error handling', function (t) {
     p1.end(new Error('test error'))
     p2.push('data 3')
     p2.end(new Error('error 2'))
+})
+
+function asyncValues (vals, timeout) {
+    timeout = timeout || 0
+    return function source (abort, next) {
+        if (!vals.length) return setTimeout(() => {
+            next(true)
+        }, timeout)
+        setTimeout(() => {
+            var val = vals.shift()
+            if (val instanceof Error) return next(val)
+            next(null, val)
+        }, timeout)
+    }
+}
+
+test('async error handling', function (t) {
+    t.plan(2)
+
+    function Sink () {
+        var err = false
+        return function sink (source) {
+            source(null, function onNext (end, data) {
+                if (end && end !== true) {
+                    if (err) t.fail('should not be called after error')
+                    err = true
+                    t.equal(end.message, 'source 1',
+                        'should pass the right error')
+                    return
+                }
+                t.deepEqual(data, [1,1],
+                    'should emit data once')
+
+                source(null, onNext)
+            })
+        }
+    }
+
+    S(
+        combine(
+            asyncValues([1, new Error('source 1')], 20),
+            asyncValues([1, new Error('source 2')], 30)
+        ),
+        Sink()
+    )
+})
+
+test('error aborts all sources', function (t) {
+    t.plan(2)
+
+    function Source () {
+        return function source (abort, next) {
+            if (abort) {
+                t.pass('should be aborted')
+                next(true)
+            }
+            next(null, 'data')
+        }
+    }
+
+    S(
+        combine(Source(), S.error(new Error('test'))),
+        S.drain(function onData (d) {
+            t.fail('should not emit data')
+        }, function onEnd (err) {
+            t.equal(err.message, 'test', 'should pass the error')
+        })
+    )
 })
 
 test('error before start', function (t) {
