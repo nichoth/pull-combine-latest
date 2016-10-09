@@ -3,6 +3,23 @@ var S = require('pull-stream')
 var Pushable = require('pull-pushable')
 var combine = require('../')
 
+test('object map', function (t) {
+    t.plan(1)
+    S(
+        combine({
+            a: S.values([1,2]),
+            b: S.values([3,4])
+        }),
+        S.collect(function (err, data) {
+            t.deepEqual(data, [
+                { a: 1, b: 3 },
+                { a: 2, b: 3 },
+                { a: 2, b: 4 }
+            ], 'can use a map of streams')
+        })
+    )
+})
+
 test('read from sync source', function (t) {
     t.plan(2)
 

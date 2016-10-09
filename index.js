@@ -1,6 +1,13 @@
 module.exports = function combineLatest (streams) {
-    if (!Array.isArray(streams)) {
+    var isObj = typeof streams === 'object'
+    if (!Array.isArray(streams) && !(isObj)) {
         streams = [].slice.call(arguments)
+    }
+    var keys = Object.keys(streams)
+    if (isObj) {
+        streams = keys.map(function (k) {
+            return streams[k]
+        })
     }
     var l = streams.length
     var buffer = []
@@ -63,7 +70,16 @@ module.exports = function combineLatest (streams) {
                     })
                 }
 
-                if (haveData) emit(null, [].concat(buffer))
+                if (haveData) {
+                    if (!isObj) emit(null, [].concat(buffer))
+                    else {
+                        var val = {}
+                        keys.forEach(function (k, i) {
+                            val[k] = buffer[i]
+                        })
+                        emit(null, val)
+                    }
+                }
             })
         })
     }
