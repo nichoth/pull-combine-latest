@@ -49,4 +49,21 @@ S(
     [3,'b']
     [3,'c']
 */
+
+
+// object map
+S(
+    combineLatest({
+        a: S.values([1,2,3]),
+        b: S.values([1,2,3])
+    }),
+    S.log()
+)
+/*
+    { a: 1, b: 1 }
+    { a: 2, b: 1 }
+    { a: 2, b: 2 }
+    { a: 3, b: 2 }
+    { a: 3, b: 3 }
+*/
 ```
