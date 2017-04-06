@@ -1,5 +1,5 @@
 module.exports = function combineLatest (streams) {
-    var isObj = !Array.isArray(streams)
+    var isObj = !Array.isArray(streams) && typeof streams !== 'function'
     if (!Array.isArray(streams) && !(isObj)) {
         streams = [].slice.call(arguments)
     }
